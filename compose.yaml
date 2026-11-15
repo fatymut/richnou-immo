@@ -1,0 +1,11 @@
+services:
+  mongodb-agence:
+    image: mongo:7
+    container_name: richnou-mongodb-agence
+    ports:
+      - "27017:27017"
+    volumes:
+      - agence-data:/data/db
+
+volumes:
+  agence-data:
