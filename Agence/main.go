@@ -1,29 +1,24 @@
-
 package main
 
 import (
-    "context"
-    "log"
-    "net/http"
+	"context"
+	"log"
+	"net/http"
 
-    "richnou-immo/agence/database"
-    "richnou-immo/agence/routes"
+	"richnou-immo/agence/database"
+	"richnou-immo/agence/routes"
+	// "richnou-immo/agence/scripts"
 )
 
 func main() {
-    client, err := database.Connect()
+	database.NewDB()
+	defer database.Db.Disconnect(context.Background())
 
-    if err != nil {
-        log.Fatal("Erreur de connexion MongoDB : ", err)
-    }
-    defer client.Disconnect(context.Background())
+	http.HandleFunc("GET /health", routes.HealthCheck)
+	http.HandleFunc("GET /annonces", routes.GetAnnonces)
+	http.HandleFunc("GET /annonces/{id}", routes.GetAnnonceByID)
 
-    log.Println("Connexion à MongoDB réussie !")
-    http.HandleFunc("GET /health", routes.HealthCheck)
+	log.Println("Serveur démarré sur le port 8080")
 
-    log.Println("Serveur démarré sur le port 8080")
-
-    if err := http.ListenAndServe(":8080", nil); err != nil {
-        log.Println("Arrêt du serveur :", err)
-    }
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
