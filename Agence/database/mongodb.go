@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -40,6 +41,16 @@ func NewDB() {
 
 	Db = client
 	Database = client.Database(dbName)
+
+	index := mongo.IndexModel{
+		Keys: bson.D{{Key: "id", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err = Database.Collection("annonces").Indexes().CreateOne(ctx, index)
+	if err != nil {
+		log.Fatal("Erreur création index unique : ", err)
+	}
 
 	log.Println("Connexion à MongoDB réussie, base :", dbName)
 }
