@@ -49,6 +49,41 @@ func AfficherAnnonces(address string) {
     }
 }
 
+func AfficherUneAnnonce(address string) {
+	
+
+    resp, err := http.Get(address)
+    if err != nil {
+        fmt.Println("Erreur de récupération des annonces :", err)
+        return
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        fmt.Println("Erreur HTTP :", resp.StatusCode)
+        return
+    }
+
+    var annonce models.Annonce
+
+    err = json.NewDecoder(resp.Body).Decode(&annonce)
+    if err != nil {
+        fmt.Println("Erreur de décodage JSON :", err)
+        return
+    }
+
+	
+
+    fmt.Printf(
+        "ID : %d | Titre : %s | Description : %s | Ville : %s | Prix : %.2f €\n",
+        annonce.ID,
+        annonce.Titre,
+        annonce.Description,
+        annonce.Ville,
+        annonce.Prix,
+    )
+}
+
 func RechercherAnnonces() {
     var ville string
 	var prixMax string
@@ -56,6 +91,15 @@ func RechercherAnnonces() {
 	var page string
 	var limit string
 	var sort string
+    var id string
+
+    fmt.Print("id recherchée : ")
+    fmt.Scanln(&id)
+
+    if id != "" {
+       AfficherAnnonceParID(id)
+       return
+    }
 
     fmt.Print("Ville recherchée : ")
     fmt.Scanln(&ville)
@@ -107,4 +151,11 @@ func RechercherAnnonces() {
     fmt.Println("URL générée :", adresse)
 
 	AfficherAnnonces(adresse)
+}
+
+func AfficherAnnonceParID(id string) {
+
+   adresse := "http://localhost:8080/annonces/"+id
+
+   AfficherUneAnnonce(adresse)
 }
