@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"os"
 	"richnou-immo/agence/database"
+	"richnou-immo/agence/grpc"
+	"richnou-immo/agence/models"
+	reseau "richnou-immo/agence/proto"
 	"strconv"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -18,7 +22,10 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
     })
 }
 
-
+type AnnonceDetailResponse struct {
+    Annonce        models.Annonce         `json:"annonce"`
+    Etablissements []*reseau.Etablissement `json:"etablissements"`
+}
 
 func GetAnnonces(w http.ResponseWriter, r *http.Request) {
     var filter = bson.M{}
@@ -129,8 +136,10 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 }
 
 
+
 func GetAnnonceByID(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
+
     idStr := r.PathValue("id")
     if idStr == "" {
         http.Error(w, "Id manquant", http.StatusBadRequest)
@@ -149,7 +158,33 @@ func GetAnnonceByID(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(annonce)
+   adresseReseau := os.Getenv("GRPC_RESEAU_ADDR")
+
+if adresseReseau == "" {
+    adresseReseau = "localhost:50051"
 }
+
+client, connexion, err := grpcclient.ConnecterReseau(adresseReseau)
+    if err != nil {
+        http.Error(w, "Erreur client gRPC", http.StatusBadGateway)
+        return
+    }
+    defer connexion.Close()
+
+    reponse, err := grpcclient.GetEtablissements(client, annonce.CodePostal)
+    if err != nil {
+        http.Error(w, "Service Réseau indisponible", http.StatusBadGateway)
+        return
+    }
+
+    resultat := AnnonceDetailResponse{
+        Annonce:        annonce,
+        Etablissements: reponse.Etablissements,
+    }
+
+    // 4. Renvoyer le résultat en JSON
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(resultat)
+}
+
 

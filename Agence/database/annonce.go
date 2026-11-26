@@ -42,15 +42,15 @@ func GetAllAnnonces(ctx context.Context, filter bson.M, limit int64, skip int64,
 	return annonces,nil
 }
 
-func GetAnnonceByID(ctx context.Context, id int) (*models.Annonce, error) {
+func GetAnnonceByID(ctx context.Context, id int) (models.Annonce, error) {
 	var annonce models.Annonce
 
 	err := Database.Collection("annonces").FindOne(ctx, bson.M{"id": id}).Decode(&annonce)
 	if err != nil {
-		return nil, fmt.Errorf("Annonce introuvable")
+		return models.Annonce{}, fmt.Errorf("Annonce introuvable")
 	}
 
-	return &annonce, nil
+	return annonce, nil
 }
 
 func ExportAnnonces(ctx context.Context) ([]models.Annonce, error) {
